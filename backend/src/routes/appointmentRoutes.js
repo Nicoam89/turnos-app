@@ -1,0 +1,23 @@
+import express from "express";
+const router = express.Router();
+
+import {
+  getAvailableSlots,
+  createAppointment,
+  cancelAppointment,
+  rescheduleAppointment
+} from "../controllers/appointmentController.js";
+
+import { protect } from "../middlewares/authMiddleware.js";
+
+router.get("/available-slots", getAvailableSlots);
+
+router.post("/", protect, createAppointment);
+
+// ❌ cancelar
+router.patch("/:id/cancel", protect, cancelAppointment);
+
+// 🔄 reprogramar
+router.patch("/:id/reschedule", protect, rescheduleAppointment);
+
+export default router;
