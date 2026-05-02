@@ -1,0 +1,75 @@
+// ─── Paleta CliniQ ───────────────────────────────────────
+$navy-dark:    #120e45;
+$navy:         #1a1360;
+$navy-light:   #211a82;
+$cyan:         #00d4c8;
+$cyan-light:   #4eeae5;
+$cyan-mid:     #00b8d9;
+
+// ─── Texto ───────────────────────────────────────────────
+$text-primary:   #ffffff;
+$text-muted:     rgba(255, 255, 255, 0.6);
+$text-subtle:    rgba(255, 255, 255, 0.35);
+
+// ─── Superficies ─────────────────────────────────────────
+$surface:        rgba(255, 255, 255, 0.05);
+$surface-hover:  rgba(255, 255, 255, 0.09);
+$border:         rgba(255, 255, 255, 0.1);
+$border-strong:  rgba(255, 255, 255, 0.18);
+
+// ─── Tipografía ───────────────────────────────────────────
+$font-display: 'Sora', sans-serif;
+$font-body:    'DM Sans', sans-serif;
+
+// ─── Espaciado ────────────────────────────────────────────
+$spacing-xs:  0.25rem;
+$spacing-sm:  0.5rem;
+$spacing-md:  1rem;
+$spacing-lg:  1.5rem;
+$spacing-xl:  2.5rem;
+$spacing-2xl: 4rem;
+
+// ─── Bordes ───────────────────────────────────────────────
+$radius-sm:   8px;
+$radius-md:   14px;
+$radius-lg:   20px;
+$radius-pill: 100px;
+
+// ─── Breakpoints ─────────────────────────────────────────
+$bp-mobile:  480px;
+$bp-tablet:  768px;
+$bp-desktop: 1024px;
+
+// ─── Mixins útiles ────────────────────────────────────────
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin mobile {
+  @media (max-width: $bp-tablet) { @content; }
+}
+
+@mixin tablet {
+  @media (max-width: $bp-desktop) { @content; }
+}
+
+@mixin gradient-text {
+  background: linear-gradient(90deg, $cyan, $cyan-light);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@mixin glass {
+  background: $surface;
+  border: 1px solid $border;
+  backdrop-filter: blur(12px);
+}

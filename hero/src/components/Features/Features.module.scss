@@ -1,0 +1,138 @@
+@use '../../styles/variables' as *;
+
+.features {
+  position: relative;
+  padding: 7rem 2rem;
+  border-top: 1px solid $border;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 60% 50% at 50% 0%,
+      rgba(0, 212, 200, 0.05) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+}
+
+// ── Container ─────────────────────────────────────────────
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// ── Header ────────────────────────────────────────────────
+.header {
+  text-align: center;
+  max-width: 580px;
+  margin: 0 auto 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $cyan;
+  background: rgba(0, 212, 200, 0.08);
+  border: 1px solid rgba(0, 212, 200, 0.2);
+  padding: 0.35rem 1rem;
+  border-radius: $radius-pill;
+}
+
+.title {
+  font-family: $font-display;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: $text-primary;
+}
+
+.gradient {
+  background: linear-gradient(90deg, $cyan, $cyan-light);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: $text-muted;
+  line-height: 1.7;
+  max-width: 480px;
+}
+
+// ── Grid ──────────────────────────────────────────────────
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Card ──────────────────────────────────────────────────
+.card {
+  @include glass;
+  border-radius: $radius-lg;
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  cursor: default;
+  transition: background 0.25s, transform 0.25s, border-color 0.25s;
+
+  &:hover {
+    background: $surface-hover;
+    transform: translateY(-4px);
+    border-color: rgba(0, 212, 200, 0.2);
+  }
+}
+
+// ── Ícono ─────────────────────────────────────────────────
+.iconWrap {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 212, 200, 0.1);
+  border: 1px solid rgba(0, 212, 200, 0.2);
+  border-radius: $radius-md;
+  @include flex-center;
+  color: $cyan;
+  flex-shrink: 0;
+  transition: background 0.25s;
+
+  .card:hover & {
+    background: rgba(0, 212, 200, 0.18);
+  }
+}
+
+// ── Texto ─────────────────────────────────────────────────
+.cardTitle {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.cardDesc {
+  font-size: 0.875rem;
+  color: $text-muted;
+  line-height: 1.7;
+}

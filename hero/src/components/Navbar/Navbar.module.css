@@ -1,0 +1,154 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  transition: background 0.3s, border-color 0.3s;
+  border-bottom: 1px solid transparent;
+}
+.navbar.scrolled {
+  background: rgba(18, 14, 69, 0.85);
+  backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.logoText {
+  font-family: "Sora", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+@media (max-width: 768px) {
+  .links {
+    display: none;
+  }
+}
+
+.link {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: color 0.2s;
+  letter-spacing: 0.01em;
+}
+.link:hover {
+  color: #ffffff;
+}
+
+.cta {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #120e45;
+  background: #00d4c8;
+  padding: 0.55rem 1.4rem;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.cta:hover {
+  background: #4eeae5;
+  transform: translateY(-1px);
+}
+@media (max-width: 768px) {
+  .cta {
+    display: none;
+  }
+}
+
+.burger {
+  display: none;
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 4px;
+}
+@media (max-width: 768px) {
+  .burger {
+    display: flex;
+  }
+}
+
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 2rem 1.75rem;
+  background: rgba(18, 14, 69, 0.97);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.3s;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+@media (max-width: 768px) {
+  .mobileMenu {
+    display: flex;
+  }
+}
+.mobileMenu.open {
+  max-height: 400px;
+  padding-top: 1.25rem;
+  padding-bottom: 1.75rem;
+}
+.mobileMenu ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobileLink {
+  display: block;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.6rem 0;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: color 0.2s;
+}
+.mobileLink:hover {
+  color: #ffffff;
+}
+
+.mobileCta {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #120e45;
+  background: #00d4c8;
+  padding: 0.75rem 1.5rem;
+  border-radius: 100px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mobileCta:hover {
+  background: #4eeae5;
+}/*# sourceMappingURL=Navbar.module.css.map */

@@ -285,3 +285,17 @@ export const rescheduleAppointment = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
+
+export const getMyAppointments = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const appointments = await Appointment.find({
+      patientId: userId
+    }).sort({ date: 1 });
+
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};

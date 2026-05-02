@@ -1,0 +1,465 @@
+@use '../../styles/variables' as *;
+
+// ── Sección ───────────────────────────────────────────────
+.hero {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+// ── Orbes de fondo ────────────────────────────────────────
+.orbTop {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  top: -120px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(0, 212, 200, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orbBottom {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  bottom: -80px;
+  left: 15%;
+  background: radial-gradient(circle, rgba(33, 26, 130, 0.5) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+// ── Layout ────────────────────────────────────────────────
+.container {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8rem 2rem 4rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 4rem;
+
+  @include tablet {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 7rem 1.5rem 3rem;
+  }
+}
+
+// ── Columna izquierda ─────────────────────────────────────
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+// ── Badge ─────────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 212, 200, 0.1);
+  border: 1px solid rgba(0, 212, 200, 0.25);
+  color: $cyan;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  border-radius: $radius-pill;
+  margin-bottom: 1.75rem;
+  width: fit-content;
+
+  @include tablet {
+    margin-inline: auto;
+  }
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  background: $cyan;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1);   }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+// ── Headline ──────────────────────────────────────────────
+.headline {
+  font-family: $font-display;
+  font-size: clamp(2.4rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin-bottom: 1.5rem;
+  color: $text-primary;
+}
+
+.gradient {
+  @include gradient-text;
+}
+
+// ── Descripción ───────────────────────────────────────────
+.desc {
+  font-size: 1.05rem;
+  color: $text-muted;
+  line-height: 1.75;
+  max-width: 440px;
+  margin-bottom: 2.25rem;
+
+  @include tablet {
+    margin-inline: auto;
+  }
+}
+
+// ── Acciones ──────────────────────────────────────────────
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.75rem;
+
+  @include tablet {
+    justify-content: center;
+  }
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, $cyan 0%, $cyan-mid 100%);
+  color: $navy-dark;
+  font-family: $font-body;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.85rem 1.75rem;
+  border-radius: $radius-pill;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0, 212, 200, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(0, 212, 200, 0.35);
+  }
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: $text-primary;
+  font-family: $font-body;
+  font-size: 0.95rem;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 1; }
+}
+
+.playCircle {
+  @include flex-center;
+  width: 38px;
+  height: 38px;
+  border: 1.5px solid $border-strong;
+  border-radius: 50%;
+  color: $cyan;
+}
+
+// ── Stats ─────────────────────────────────────────────────
+.stats {
+  display: flex;
+  gap: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid $border;
+
+  @include tablet {
+    justify-content: center;
+  }
+
+  @include mobile {
+    gap: 1.5rem;
+  }
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statNumber {
+  font-family: $font-display;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.statLabel {
+  font-size: 0.78rem;
+  color: $text-muted;
+}
+
+// ── Columna derecha ───────────────────────────────────────
+.right {
+  display: flex;
+  justify-content: center;
+
+  @include tablet {
+    order: -1;
+  }
+}
+
+// ── Mockup wrap ───────────────────────────────────────────
+.mockupWrap {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+}
+
+// ── App frame ─────────────────────────────────────────────
+.appFrame {
+  @include glass;
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+}
+
+.appHeader {
+  @include flex-between;
+  margin-bottom: 1.25rem;
+}
+
+.appTitle {
+  font-family: $font-display;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.appSub {
+  font-size: 0.75rem;
+  color: $text-muted;
+  margin-top: 2px;
+}
+
+.todayBadge {
+  background: rgba(0, 212, 200, 0.12);
+  color: $cyan;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: $radius-pill;
+  border: 1px solid rgba(0, 212, 200, 0.2);
+}
+
+// ── Mini calendario ───────────────────────────────────────
+.miniCal {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: $radius-md;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.calLabel {
+  font-size: 0.65rem;
+  color: $text-subtle;
+  padding-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.calDay {
+  font-size: 0.78rem;
+  padding: 5px 0;
+  border-radius: $radius-sm;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: $surface-hover; }
+}
+
+.calActive {
+  background: $cyan;
+  color: $navy-dark;
+  font-weight: 700;
+
+  &:hover { background: $cyan-light; }
+}
+
+.calDot {
+  color: $text-primary;
+  position: relative;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: $cyan;
+    border-radius: 50%;
+    margin: 2px auto 0;
+  }
+}
+
+// ── Lista de turnos ───────────────────────────────────────
+.sectionLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $text-muted;
+  margin-bottom: 0.75rem;
+}
+
+.apptList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.apptCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 0.7rem 0.9rem;
+  transition: background 0.2s;
+
+  &:hover { background: $surface-hover; }
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  @include flex-center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.apptInfo { flex: 1; min-width: 0; }
+
+.apptName {
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apptType {
+  font-size: 0.72rem;
+  color: $text-muted;
+  margin-top: 1px;
+}
+
+.apptRight { text-align: right; flex-shrink: 0; }
+
+.apptTime {
+  font-family: $font-display;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $cyan;
+}
+
+.apptStatus {
+  font-size: 0.65rem;
+  color: $text-muted;
+  margin-top: 1px;
+}
+
+// ── Footer del card ───────────────────────────────────────
+.cardFooter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 1.25rem;
+}
+
+.cardStat {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: $radius-sm;
+  padding: 0.65rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cardStatNum {
+  font-family: $font-display;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.accent { color: $cyan; }
+
+.cardStatLabel {
+  font-size: 0.65rem;
+  color: $text-muted;
+}
+
+// ── Notificación flotante ─────────────────────────────────
+.notif {
+  position: absolute;
+  bottom: -18px;
+  left: -28px;
+  @include glass;
+  border-radius: $radius-md;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 215px;
+
+  @include mobile {
+    display: none;
+  }
+}
+
+.notifIcon {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 212, 200, 0.12);
+  border-radius: $radius-sm;
+  @include flex-center;
+  color: $cyan;
+  flex-shrink: 0;
+}
+
+.notifTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.notifSub {
+  font-size: 0.7rem;
+  color: $text-muted;
+  margin-top: 1px;
+}
