@@ -22,6 +22,16 @@ const appointmentSchema = new mongoose.Schema(
     startTime: String,
     endTime: String,
 
+    modality: {
+      type: String,
+      enum: ["online", "offline"],
+      required: true,
+      default: "offline"
+    },
+
+    meetLink: String,
+    address: String,
+
     status: {
       type: String,
       enum: ["booked", "cancelled", "completed"],
@@ -29,7 +39,7 @@ const appointmentSchema = new mongoose.Schema(
     },
 
     cancelledAt: Date,
-cancellationReason: String
+    cancellationReason: String
   },
   { timestamps: true }
 );

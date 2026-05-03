@@ -9,7 +9,10 @@ export const getMyAvailability = async (req, res) => {
 
     return res.json({
       appointmentDuration: profile.appointmentDuration,
-      availability: profile.availability
+      availability: profile.availability,
+      recurringRules: profile.recurringRules,
+      defaultMeetLink: profile.defaultMeetLink,
+      officeAddress: profile.officeAddress
     });
   } catch (error) {
     return res.status(500).json({ msg: error.message });
@@ -19,7 +22,13 @@ export const getMyAvailability = async (req, res) => {
 export const upsertMyAvailability = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { appointmentDuration = 30, availability = [] } = req.body;
+    const {
+      appointmentDuration = 30,
+      availability = [],
+      recurringRules = [],
+      defaultMeetLink = "",
+      officeAddress = ""
+    } = req.body;
 
     const normalized = availability
       .filter((a) => a && a.startTime && a.endTime)
@@ -29,13 +38,27 @@ export const upsertMyAvailability = async (req, res) => {
         endTime: a.endTime
       }));
 
+    const normalizedRules = recurringRules
+      .filter((r) => r && r.frequency && r.startTime && r.endTime)
+      .map((r) => ({
+        frequency: r.frequency,
+        interval: Number(r.interval) || 1,
+        dayOfWeek: r.dayOfWeek !== undefined ? Number(r.dayOfWeek) : undefined,
+        dayOfMonth: r.dayOfMonth !== undefined ? Number(r.dayOfMonth) : undefined,
+        startTime: r.startTime,
+        endTime: r.endTime
+      }));
+
     const profile = await ProfessionalProfile.findOneAndUpdate(
       { userId },
       {
         $set: {
           appointmentDuration,
           availability: normalized,
-          specialty: "General"
+          recurringRules: normalizedRules,
+          specialty: "General",
+          defaultMeetLink,
+          officeAddress
         }
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -44,7 +67,10 @@ export const upsertMyAvailability = async (req, res) => {
     return res.json({
       msg: "Disponibilidad guardada",
       appointmentDuration: profile.appointmentDuration,
-      availability: profile.availability
+      availability: profile.availability,
+      recurringRules: profile.recurringRules,
+      defaultMeetLink: profile.defaultMeetLink,
+      officeAddress: profile.officeAddress
     });
   } catch (error) {
     return res.status(500).json({ msg: error.message });

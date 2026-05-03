@@ -3,15 +3,40 @@ import mongoose from "mongoose";
 const availabilitySchema = new mongoose.Schema(
   {
     dayOfWeek: {
-      type: Number, // 0 = domingo, 6 = sábado
+      type: Number,
       required: true
     },
     startTime: {
-      type: String, // "09:00"
+      type: String,
       required: true
     },
     endTime: {
-      type: String, // "18:00"
+      type: String,
+      required: true
+    }
+  },
+  { _id: false }
+);
+
+const recurringRuleSchema = new mongoose.Schema(
+  {
+    frequency: {
+      type: String,
+      enum: ["weekly", "monthly"],
+      required: true
+    },
+    interval: {
+      type: Number,
+      default: 1
+    },
+    dayOfWeek: Number,
+    dayOfMonth: Number,
+    startTime: {
+      type: String,
+      required: true
+    },
+    endTime: {
+      type: String,
       required: true
     }
   },
@@ -25,33 +50,27 @@ const professionalProfileSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
-
     centerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Center",
       default: null
     },
-
     specialty: {
       type: String,
       required: true
     },
-
     appointmentDuration: {
-      type: Number, // en minutos
+      type: Number,
       default: 30
     },
-
-    availability: [availabilitySchema]
+    availability: [availabilitySchema],
+    recurringRules: [recurringRuleSchema],
+    defaultMeetLink: { type: String, default: "" },
+    officeAddress: { type: String, default: "" }
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
-const ProfessionalProfile = mongoose.model(
-  "ProfessionalProfile",
-  professionalProfileSchema
-);
+const ProfessionalProfile = mongoose.model("ProfessionalProfile", professionalProfileSchema);
 
 export default ProfessionalProfile;

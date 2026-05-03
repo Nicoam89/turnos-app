@@ -6,7 +6,7 @@ import { createCalendarEvent } from "../services/googleCalendarService.js";
 
 export const createAppointment = async (req, res) => {
   try {
-    const { professionalId, date, startTime } = req.body;
+    const { professionalId, date, startTime, modality } = req.body;
 
     const patientId = req.user.userId; // viene del JWT
 
@@ -14,6 +14,28 @@ export const createAppointment = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(professionalId)) {
       return res.status(400).json({ msg: "ID inválido" });
     }
+
+    if (!["online", "offline"].includes(modality)) {
+      return res.status(400).json({ msg: "Modalidad inválida" });
+    }
+
+    if (modality === "online" && !meetLink) {
+      return res.status(400).json({ msg: "Debés incluir el link de Meet" });
+    }
+
+    if (modality === "offline" && !address) {
+      return res.status(400).json({ msg: "Debés incluir la dirección" });
+    }
+
+
+    if (modality === "online" && !profile.defaultMeetLink) {
+      return res.status(400).json({ msg: "El profesional no configuró link de Meet" });
+    }
+
+    if (modality === "offline" && !profile.officeAddress) {
+      return res.status(400).json({ msg: "El profesional no configuró dirección" });
+    }
+
 
     // 1. obtener perfil profesional
     const profile = await ProfessionalProfile.findOne({
@@ -32,12 +54,10 @@ export const createAppointment = async (req, res) => {
 
     const endTime = endDate.toTimeString().slice(0, 5);
 
-    // 3. validar disponibilidad (día)
-    const dayOfWeek = new Date(date).getDay();
 
-    const availability = profile.availability.find(
-      (a) => a.dayOfWeek === dayOfWeek
-    );
+    // 3. validar disponibilidad (día / recurrencia)
+    const availability = getAvailabilityForDate(profile, new Date(date));
+
 
     if (!availability) {
       return res.status(400).json({ msg: "No hay disponibilidad ese día" });
@@ -59,9 +79,13 @@ export const createAppointment = async (req, res) => {
         $lte: new Date(date + "T23:59:59.999Z")
       },
       startTime,
-      status: "booked"
+      endTime,
+      modality,
+      meetLink: modality === "online" ? profile.defaultMeetLink : "",
+      address: modality === "offline" ? profile.officeAddress : ""
     });
 
+    
     if (existing) {
       return res.status(400).json({ msg: "Turno ya reservado" });
     }
@@ -72,7 +96,10 @@ export const createAppointment = async (req, res) => {
       professionalId,
       date,
       startTime,
-      endTime
+       endTime,
+      modality,
+      meetLink: modality === "online" ? meetLink : "",
+      address: modality === "offline" ? address : ""
     });
 
     // 🟡 7. Google Calendar (opcional pero listo)
@@ -101,6 +128,33 @@ export const createAppointment = async (req, res) => {
 };
 
 // helper
+const getAvailabilityForDate = (profile, selectedDate) => {
+  const dayOfWeek = selectedDate.getDay();
+  const dayOfMonth = selectedDate.getDate();
+
+  const matchedRule = (profile.recurringRules || []).find((rule) => {
+    if (rule.frequency === "weekly") {
+      return rule.dayOfWeek === dayOfWeek;
+    }
+
+    if (rule.frequency === "monthly") {
+      return rule.dayOfMonth === dayOfMonth;
+    }
+
+    return false;
+  });
+
+  if (matchedRule) {
+    return {
+      startTime: matchedRule.startTime,
+      endTime: matchedRule.endTime
+    };
+  }
+
+  return profile.availability.find((a) => a.dayOfWeek === dayOfWeek);
+};
+
+
 const generateSlots = (start, end, duration) => {
   const slots = [];
 
@@ -138,11 +192,8 @@ export const getAvailableSlots = async (req, res) => {
     }
 
     const selectedDate = new Date(date);
-    const dayOfWeek = selectedDate.getDay();
 
-    const availability = profile.availability.find(
-      (a) => a.dayOfWeek === dayOfWeek
-    );
+    const availability = getAvailabilityForDate(profile, selectedDate);
 
     if (!availability) {
       return res.json({ slots: [] });
@@ -237,11 +288,8 @@ export const rescheduleAppointment = async (req, res) => {
     const newEndTime = endDate.toTimeString().slice(0, 5);
 
     // 2. validar disponibilidad
-    const dayOfWeek = new Date(newDate).getDay();
+    const availability = getAvailabilityForDate(profile, new Date(newDate));
 
-    const availability = profile.availability.find(
-      (a) => a.dayOfWeek === dayOfWeek
-    );
 
     if (!availability) {
       return res.status(400).json({ msg: "No disponible ese día" });

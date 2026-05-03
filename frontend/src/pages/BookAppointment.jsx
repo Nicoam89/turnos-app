@@ -6,8 +6,8 @@ const BookAppointment = () => {
   const [professionalId, setProfessionalId] = useState("");
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
+  const [modality, setModality] = useState("online");
 
-  // traer horarios disponibles
   const getSlots = async () => {
     try {
       const res = await api.get(
@@ -21,18 +21,16 @@ const BookAppointment = () => {
     }
   };
 
-  // reservar turno
   const bookAppointment = async (startTime) => {
     try {
       await api.post("/appointments", {
         professionalId,
         date,
-        startTime
+        startTime,
+        modality
       });
 
       alert("Turno reservado correctamente 🎉");
-
-      // refrescar slots
       getSlots();
     } catch (error) {
       alert(error.response?.data?.msg || "Error al reservar");
@@ -50,10 +48,28 @@ const BookAppointment = () => {
         onChange={(e) => setProfessionalId(e.target.value)}
       />
 
-      <br /><br />
+      <br />
+      <br />
 
-      <CalendarGrid selectedDate={date || new Date().toISOString().slice(0, 10)} onSelectDate={setDate} markedDates={new Set()} />
-      <br /><br />
+      <label>Modalidad: </label>
+      <select
+        value={modality}
+        onChange={(e) => setModality(e.target.value)}
+      >
+        <option value="online">Online</option>
+        <option value="offline">Presencial</option>
+      </select>
+
+      <br />
+      <br />
+
+      <CalendarGrid
+        selectedDate={date || new Date().toISOString().slice(0, 10)}
+        onSelectDate={setDate}
+        markedDates={new Set()}
+      />
+      <br />
+      <br />
 
       <button onClick={getSlots}>Buscar horarios</button>
 
