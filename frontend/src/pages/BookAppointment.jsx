@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CalendarGrid from "../components/CalendarGrid";
 import api from "../api/axios";
 
 const BookAppointment = () => {
@@ -51,12 +52,7 @@ const BookAppointment = () => {
 
       <br /><br />
 
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
-
+      <CalendarGrid selectedDate={date || new Date().toISOString().slice(0, 10)} onSelectDate={setDate} markedDates={new Set()} />
       <br /><br />
 
       <button onClick={getSlots}>Buscar horarios</button>

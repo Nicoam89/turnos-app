@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AuthContext } from "../context/authContextObject";
+import AuthContext from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {

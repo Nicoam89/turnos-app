@@ -12,7 +12,6 @@ import {
 import { protect } from "../middlewares/authMiddleware.js";
 
 router.get("/available-slots", getAvailableSlots);
-router.get("/my", protect, getMyAppointments);
 
 router.post("/", protect, createAppointment);
 
@@ -21,5 +20,7 @@ router.patch("/:id/cancel", protect, cancelAppointment);
 
 // 🔄 reprogramar
 router.patch("/:id/reschedule", protect, rescheduleAppointment);
+
+router.get("/my", protect, getMyAppointments);
 
 export default router;

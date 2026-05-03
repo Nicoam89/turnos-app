@@ -38,4 +38,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-frontend/src/context/authContextObject.jsfrontend/src/context/authContextObject.js
+
+export default AuthContext;
