@@ -10,7 +10,7 @@ const MyAppointments = () => {
   // 🔄 traer turnos del usuario
   const fetchAppointments = async () => {
     try {
-      const res = await api.get("/appointments/my"); // 👈 endpoint que vamos a usar
+      const res = await api.get("/appointments/my");
       setAppointments(res.data);
     } catch (error) {
       console.log(error);
@@ -19,7 +19,27 @@ const MyAppointments = () => {
   };
 
   useEffect(() => {
-    fetchAppointments();
+    let active = true;
+
+    const loadAppointments = async () => {
+      try {
+        const res = await api.get("/appointments/my");
+        if (active) {
+          setAppointments(res.data);
+        }
+      } catch (error) {
+        if (active) {
+          console.log(error);
+          alert("Error al cargar turnos");
+        }
+      }
+    };
+
+    loadAppointments();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // ❌ cancelar turno
@@ -28,7 +48,7 @@ const MyAppointments = () => {
       await api.patch(`/appointments/${id}/cancel`);
       alert("Turno cancelado");
       fetchAppointments();
-    } catch (error) {
+    } catch {
       alert("Error al cancelar");
     }
   };
@@ -54,34 +74,6 @@ const MyAppointments = () => {
     <div style={{ padding: "2rem" }}>
       <h2>Mis turnos</h2>
 
-      {appointments.length === 0 && <p>No tenés turnos</p>}
-
-      {appointments.map((appt) => (
-        <div
-          key={appt._id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "1rem",
-            marginBottom: "1rem"
-          }}
-        >
-          <p><b>Fecha:</b> {appt.date?.slice(0, 10)}</p>
-          <p><b>Hora:</b> {appt.startTime} - {appt.endTime}</p>
-          <p><b>Estado:</b> {appt.status}</p>
-
-          {appt.status === "booked" && (
-            <>
-              <button onClick={() => cancelAppointment(appt._id)}>
-                Cancelar
-              </button>
-
-              <button onClick={() => setEditingId(appt._id)}>
-                Reprogramar
-              </button>
-            </>
-          )}
-
-          {/* 🔄 Form de reprogramación */}
           {editingId === appt._id && (
             <div style={{ marginTop: "1rem" }}>
               <input
@@ -102,9 +94,8 @@ const MyAppointments = () => {
             </div>
           )}
         </div>
-      ))}
-    </div>
-  );
-};
+      )};
+
 
 export default MyAppointments;
+

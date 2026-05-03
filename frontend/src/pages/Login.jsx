@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/authContextObject";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -17,7 +17,7 @@ const Login = () => {
     try {
       await login(form.email, form.password);
       navigate("/");
-    } catch (error) {
+    } catch {
       alert("Error en login");
     }
   };

@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
-import { AuthContext } from "./context/AuthContext";
+import { AuthContext } from "./context/authContextObject";
 import BookAppointment from "./pages/BookAppointment";
 import MyAppointments from "./pages/MyAppointments";
 
@@ -35,6 +35,14 @@ function App() {
           element={
             <PrivateRoute>
               <MyAppointments />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/book-appointment"
+          element={
+            <PrivateRoute>
+              <BookAppointment />
             </PrivateRoute>
           }
         />

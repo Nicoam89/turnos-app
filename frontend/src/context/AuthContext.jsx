@@ -1,19 +1,12 @@
-import { createContext, useState, useEffect } from "react";
+import { useState } from "react";
 import api from "../api/axios";
-
-export const AuthContext = createContext();
+import { AuthContext } from "./authContextObject";
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-
-  // 🔁 mantener sesión al recargar
-  useEffect(() => {
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
-
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
   // 🔐 LOGIN
   const login = async (email, password) => {
@@ -45,3 +38,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+frontend/src/context/authContextObject.jsfrontend/src/context/authContextObject.js
