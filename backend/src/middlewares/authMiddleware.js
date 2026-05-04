@@ -1,30 +1,23 @@
 import jwt from "jsonwebtoken";
+import AppError from "../utils/AppError.js";
 
 export const protect = (req, res, next) => {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ msg: "No autorizado, token faltante" });
+    return next(new AppError("No autorizado, token faltante", 401));
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = decoded; // 👈 { userId, role }
-
-    next();
-  } catch (error) {
-    return res.status(401).json({ msg: "Token inválido" });
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    return next();
+  } catch {
+    return next(new AppError("Token inválido", 401));
   }
 };
 
-export const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ msg: "Acceso denegado" });
-    }
-    next();
-  };
+export const authorize = (...roles) => (req, _res, next) => {
+  if (!roles.includes(req.user.role)) return next(new AppError("Acceso denegado", 403));
+  return next();
 };

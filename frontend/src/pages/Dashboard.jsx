@@ -7,7 +7,7 @@ const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <Layout title="Turnos App">
+    <Layout title="Agenda iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold text-slate-900">Dashboard</h2>
         <p className="text-slate-600">Bienvenido: <strong>{user?.name}</strong></p>

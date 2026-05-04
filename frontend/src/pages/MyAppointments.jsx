@@ -9,7 +9,7 @@ const MyAppointments = () => {
   const cancelAppointment = async (id) => { try { await api.patch(`/appointments/${id}/cancel`); alert("Turno cancelado"); fetchAppointments(); } catch { alert("Error al cancelar"); } };
 
   return (
-    <Layout title="Turnos App">
+    <Layout title="Agenda iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold">Mis turnos</h2>
         {appointments.length === 0 ? <p className="text-slate-500">No hay turnos cargados.</p> : appointments.map((appt) => (

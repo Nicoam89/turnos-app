@@ -19,7 +19,7 @@ const ProfessionalCalendar = () => {
   const save = async () => { await api.put("/professionals/me/availability", { appointmentDuration, availability }); alert("Disponibilidad guardada"); };
 
   return (
-    <Layout title="Turnos App">
+    <Layout title="Agenda iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold">Calendario profesional</h2>
         <CalendarGrid selectedDate={selectedDate} onSelectDate={setSelectedDate} />

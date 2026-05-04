@@ -3,347 +3,161 @@ import Appointment from "../models/Appointment.js";
 import ProfessionalProfile from "../models/ProfessionalProfile.js";
 import User from "../models/User.js";
 import { createCalendarEvent } from "../services/googleCalendarService.js";
+import AppError from "../utils/AppError.js";
+import { sendSuccess } from "../utils/apiResponse.js";
 
-export const createAppointment = async (req, res) => {
-  try {
-    const { professionalId, date, startTime, modality } = req.body;
-
-    const patientId = req.user.userId; // viene del JWT
-
-    // 🔒 validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(professionalId)) {
-      return res.status(400).json({ msg: "ID inválido" });
-    }
-
-    if (!["online", "offline"].includes(modality)) {
-      return res.status(400).json({ msg: "Modalidad inválida" });
-    }
-
-    if (modality === "online" && !meetLink) {
-      return res.status(400).json({ msg: "Debés incluir el link de Meet" });
-    }
-
-    if (modality === "offline" && !address) {
-      return res.status(400).json({ msg: "Debés incluir la dirección" });
-    }
-
-
-    if (modality === "online" && !profile.defaultMeetLink) {
-      return res.status(400).json({ msg: "El profesional no configuró link de Meet" });
-    }
-
-    if (modality === "offline" && !profile.officeAddress) {
-      return res.status(400).json({ msg: "El profesional no configuró dirección" });
-    }
-
-
-    // 1. obtener perfil profesional
-    const profile = await ProfessionalProfile.findOne({
-      userId: professionalId
-    });
-
-    if (!profile) {
-      return res.status(404).json({ msg: "Profesional no encontrado" });
-    }
-
-    // 2. calcular endTime
-    const startDate = new Date(`${date}T${startTime}:00`);
-    const endDate = new Date(
-      startDate.getTime() + profile.appointmentDuration * 60000
-    );
-
-    const endTime = endDate.toTimeString().slice(0, 5);
-
-
-    // 3. validar disponibilidad (día / recurrencia)
-    const availability = getAvailabilityForDate(profile, new Date(date));
-
-
-    if (!availability) {
-      return res.status(400).json({ msg: "No hay disponibilidad ese día" });
-    }
-
-    // 4. validar que esté dentro del rango horario
-    if (
-      startTime < availability.startTime ||
-      endTime > availability.endTime
-    ) {
-      return res.status(400).json({ msg: "Horario fuera de disponibilidad" });
-    }
-
-    // 🔴 5. VALIDACIÓN ANTI DOBLE BOOKING (CLAVE)
-    const existing = await Appointment.findOne({
-      professionalId,
-      date: {
-        $gte: new Date(date + "T00:00:00.000Z"),
-        $lte: new Date(date + "T23:59:59.999Z")
-      },
-      startTime,
-      endTime,
-      modality,
-      meetLink: modality === "online" ? profile.defaultMeetLink : "",
-      address: modality === "offline" ? profile.officeAddress : ""
-    });
-
-    
-    if (existing) {
-      return res.status(400).json({ msg: "Turno ya reservado" });
-    }
-
-    // 6. crear turno
-    const appointment = await Appointment.create({
-      patientId,
-      professionalId,
-      date,
-      startTime,
-       endTime,
-      modality,
-      meetLink: modality === "online" ? meetLink : "",
-      address: modality === "offline" ? address : ""
-    });
-
-    // 🟡 7. Google Calendar (opcional pero listo)
-    const professional = await User.findById(professionalId);
-
-    if (professional?.googleRefreshToken) {
-      try {
-        await createCalendarEvent({
-          accessToken: professional.googleRefreshToken,
-          start: startDate.toISOString(),
-          end: endDate.toISOString(),
-          summary: "Turno médico"
-        });
-      } catch (err) {
-        console.log("Error Google Calendar:", err.message);
-      }
-    }
-
-    res.status(201).json({
-      msg: "Turno creado correctamente",
-      appointment
-    });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
-};
-
-// helper
 const getAvailabilityForDate = (profile, selectedDate) => {
   const dayOfWeek = selectedDate.getDay();
   const dayOfMonth = selectedDate.getDate();
 
   const matchedRule = (profile.recurringRules || []).find((rule) => {
-    if (rule.frequency === "weekly") {
-      return rule.dayOfWeek === dayOfWeek;
-    }
-
-    if (rule.frequency === "monthly") {
-      return rule.dayOfMonth === dayOfMonth;
-    }
-
+    if (rule.frequency === "weekly") return rule.dayOfWeek === dayOfWeek;
+    if (rule.frequency === "monthly") return rule.dayOfMonth === dayOfMonth;
     return false;
   });
 
-  if (matchedRule) {
-    return {
-      startTime: matchedRule.startTime,
-      endTime: matchedRule.endTime
-    };
-  }
-
+  if (matchedRule) return { startTime: matchedRule.startTime, endTime: matchedRule.endTime };
   return profile.availability.find((a) => a.dayOfWeek === dayOfWeek);
 };
 
-
 const generateSlots = (start, end, duration) => {
   const slots = [];
-
   let current = new Date(`1970-01-01T${start}:00`);
   const endTime = new Date(`1970-01-01T${end}:00`);
-
   while (current < endTime) {
     const next = new Date(current.getTime() + duration * 60000);
-
-    slots.push({
-      start: current.toTimeString().slice(0, 5),
-      end: next.toTimeString().slice(0, 5)
-    });
-
+    slots.push({ start: current.toTimeString().slice(0, 5), end: next.toTimeString().slice(0, 5) });
     current = next;
   }
-
   return slots;
 };
 
-export const getAvailableSlots = async (req, res) => {
-  try {
-    const { professionalId, date } = req.query;
+export const createAppointment = async (req, res) => {
+  const { professionalId, date, startTime, modality } = req.body;
+  const patientId = req.user.userId;
 
-    if (!professionalId || !date) {
-      return res.status(400).json({ msg: "Faltan parámetros" });
+  if (!mongoose.Types.ObjectId.isValid(professionalId)) throw new AppError("ID inválido", 400);
+  if (!["online", "offline"].includes(modality)) throw new AppError("Modalidad inválida", 400);
+
+  const profile = await ProfessionalProfile.findOne({ userId: professionalId });
+  if (!profile) throw new AppError("Profesional no encontrado", 404);
+  if (modality === "online" && !profile.defaultMeetLink) throw new AppError("El profesional no configuró link de Meet", 400);
+  if (modality === "offline" && !profile.officeAddress) throw new AppError("El profesional no configuró dirección", 400);
+
+  const startDate = new Date(`${date}T${startTime}:00`);
+  const endDate = new Date(startDate.getTime() + profile.appointmentDuration * 60000);
+  const endTime = endDate.toTimeString().slice(0, 5);
+
+  const availability = getAvailabilityForDate(profile, new Date(date));
+  if (!availability) throw new AppError("No hay disponibilidad ese día", 400);
+  if (startTime < availability.startTime || endTime > availability.endTime) throw new AppError("Horario fuera de disponibilidad", 400);
+
+  const existing = await Appointment.findOne({
+    professionalId,
+    date: { $gte: new Date(`${date}T00:00:00.000Z`), $lte: new Date(`${date}T23:59:59.999Z`) },
+    startTime,
+    status: "booked"
+  });
+  if (existing) throw new AppError("Turno ya reservado", 400);
+
+  const appointment = await Appointment.create({
+    patientId,
+    professionalId,
+    date,
+    startTime,
+    endTime,
+    modality,
+    meetLink: modality === "online" ? profile.defaultMeetLink : "",
+    address: modality === "offline" ? profile.officeAddress : ""
+  });
+
+  const professional = await User.findById(professionalId);
+  if (professional?.googleRefreshToken) {
+    try {
+      await createCalendarEvent({
+        accessToken: professional.googleRefreshToken,
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        summary: "Turno médico"
+      });
+    } catch (err) {
+      console.log("Error Google Calendar:", err.message);
     }
-
-    const profile = await ProfessionalProfile.findOne({
-      userId: professionalId
-    });
-
-    if (!profile) {
-      return res.status(404).json({ msg: "Profesional no encontrado" });
-    }
-
-    const selectedDate = new Date(date);
-
-    const availability = getAvailabilityForDate(profile, selectedDate);
-
-    if (!availability) {
-      return res.json({ slots: [] });
-    }
-
-    const allSlots = generateSlots(
-      availability.startTime,
-      availability.endTime,
-      profile.appointmentDuration
-    );
-
-    const appointments = await Appointment.find({
-      professionalId,
-      date: {
-        $gte: new Date(date + "T00:00:00.000Z"),
-        $lte: new Date(date + "T23:59:59.999Z")
-      },
-      status: "booked"
-    });
-
-    const bookedTimes = appointments.map((a) => a.startTime);
-
-    const availableSlots = allSlots.filter(
-      (slot) => !bookedTimes.includes(slot.start)
-    );
-
-    res.json({
-      date,
-      totalSlots: allSlots.length,
-      availableSlots
-    });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
   }
+
+  return sendSuccess(res, { statusCode: 201, message: "Turno creado correctamente", data: appointment });
+};
+
+export const getAvailableSlots = async (req, res) => {
+  const { professionalId, date } = req.query;
+  const profile = await ProfessionalProfile.findOne({ userId: professionalId });
+  if (!profile) throw new AppError("Profesional no encontrado", 404);
+
+  const availability = getAvailabilityForDate(profile, new Date(date));
+  if (!availability) return sendSuccess(res, { message: "Disponibilidad obtenida", data: { date, totalSlots: 0, availableSlots: [] } });
+
+  const allSlots = generateSlots(availability.startTime, availability.endTime, profile.appointmentDuration);
+  const appointments = await Appointment.find({
+    professionalId,
+    date: { $gte: new Date(`${date}T00:00:00.000Z`), $lte: new Date(`${date}T23:59:59.999Z`) },
+    status: "booked"
+  });
+
+  const bookedTimes = appointments.map((a) => a.startTime);
+  const availableSlots = allSlots.filter((slot) => !bookedTimes.includes(slot.start));
+
+  return sendSuccess(res, { message: "Disponibilidad obtenida", data: { date, totalSlots: allSlots.length, availableSlots } });
 };
 
 export const cancelAppointment = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const appointment = await Appointment.findById(id);
-
-    if (!appointment) {
-      return res.status(404).json({ msg: "Turno no encontrado" });
-    }
-
-    // 🔒 seguridad: solo paciente dueño o profesional
-    if (
-      appointment.patientId.toString() !== req.user.userId &&
-      appointment.professionalId.toString() !== req.user.userId
-    ) {
-      return res.status(403).json({ msg: "No autorizado" });
-    }
-
-    appointment.status = "cancelled";
-    appointment.cancelledAt = new Date();
-
-    await appointment.save();
-
-    res.json({ msg: "Turno cancelado correctamente" });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment) throw new AppError("Turno no encontrado", 404);
+  if (appointment.patientId.toString() !== req.user.userId && appointment.professionalId.toString() !== req.user.userId) {
+    throw new AppError("No autorizado", 403);
   }
+
+  appointment.status = "cancelled";
+  appointment.cancelledAt = new Date();
+  await appointment.save();
+
+  return sendSuccess(res, { message: "Turno cancelado correctamente", data: appointment });
 };
 
 export const rescheduleAppointment = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { newDate, newStartTime } = req.body;
+  const { id } = req.params;
+  const { newDate, newStartTime } = req.body;
 
-    const appointment = await Appointment.findById(id);
+  const appointment = await Appointment.findById(id);
+  if (!appointment) throw new AppError("Turno no encontrado", 404);
+  if (appointment.patientId.toString() !== req.user.userId) throw new AppError("No autorizado", 403);
 
-    if (!appointment) {
-      return res.status(404).json({ msg: "Turno no encontrado" });
-    }
+  const profile = await ProfessionalProfile.findOne({ userId: appointment.professionalId });
+  const startDate = new Date(`${newDate}T${newStartTime}:00`);
+  const endDate = new Date(startDate.getTime() + profile.appointmentDuration * 60000);
+  const newEndTime = endDate.toTimeString().slice(0, 5);
 
-    // 🔒 validar permisos
-    if (appointment.patientId.toString() !== req.user.userId) {
-      return res.status(403).json({ msg: "No autorizado" });
-    }
+  const availability = getAvailabilityForDate(profile, new Date(newDate));
+  if (!availability) throw new AppError("No disponible ese día", 400);
+  if (newStartTime < availability.startTime || newEndTime > availability.endTime) throw new AppError("Horario inválido", 400);
 
-    const profile = await ProfessionalProfile.findOne({
-      userId: appointment.professionalId
-    });
+  const existing = await Appointment.findOne({
+    professionalId: appointment.professionalId,
+    date: { $gte: new Date(`${newDate}T00:00:00.000Z`), $lte: new Date(`${newDate}T23:59:59.999Z`) },
+    startTime: newStartTime,
+    status: "booked",
+    _id: { $ne: id }
+  });
+  if (existing) throw new AppError("Ese horario ya está ocupado", 400);
 
-    // 1. calcular nuevo horario
-    const startDate = new Date(`${newDate}T${newStartTime}:00`);
-    const endDate = new Date(
-      startDate.getTime() + profile.appointmentDuration * 60000
-    );
+  appointment.date = newDate;
+  appointment.startTime = newStartTime;
+  appointment.endTime = newEndTime;
+  await appointment.save();
 
-    const newEndTime = endDate.toTimeString().slice(0, 5);
-
-    // 2. validar disponibilidad
-    const availability = getAvailabilityForDate(profile, new Date(newDate));
-
-
-    if (!availability) {
-      return res.status(400).json({ msg: "No disponible ese día" });
-    }
-
-    if (
-      newStartTime < availability.startTime ||
-      newEndTime > availability.endTime
-    ) {
-      return res.status(400).json({ msg: "Horario inválido" });
-    }
-
-    // 🔴 3. VALIDACIÓN ANTI DOBLE BOOKING
-    const existing = await Appointment.findOne({
-      professionalId: appointment.professionalId,
-      date: {
-        $gte: new Date(newDate + "T00:00:00.000Z"),
-        $lte: new Date(newDate + "T23:59:59.999Z")
-      },
-      startTime: newStartTime,
-      status: "booked",
-      _id: { $ne: id } // 👈 excluir el actual
-    });
-
-    if (existing) {
-      return res.status(400).json({ msg: "Ese horario ya está ocupado" });
-    }
-
-    // 4. actualizar turno
-    appointment.date = newDate;
-    appointment.startTime = newStartTime;
-    appointment.endTime = newEndTime;
-
-    await appointment.save();
-
-    res.json({
-      msg: "Turno reprogramado correctamente",
-      appointment
-    });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
+  return sendSuccess(res, { message: "Turno reprogramado correctamente", data: appointment });
 };
 
 export const getMyAppointments = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const appointments = await Appointment.find({
-      patientId: userId
-    }).sort({ date: 1 });
-
-    res.json(appointments);
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
+  const appointments = await Appointment.find({ patientId: req.user.userId }).sort({ date: 1 });
+  return sendSuccess(res, { message: "Turnos obtenidos", data: appointments });
 };

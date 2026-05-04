@@ -1,83 +1,52 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import AppError from "../utils/AppError.js";
+import { sendSuccess } from "../utils/apiResponse.js";
 
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      userId: user._id,
-      role: user.role
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-};
+const generateToken = (user) =>
+  jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: "7d"
+  });
 
-// 📝 REGISTER
 export const register = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+  const { name, email, password, role } = req.body;
 
-    // validar usuario existente
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ msg: "El usuario ya existe" });
-    }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) throw new AppError("El usuario ya existe", 400);
 
-    // hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role
-    });
+  const user = await User.create({ name, email, password: hashedPassword, role });
+  const token = generateToken(user);
 
-    const token = generateToken(user);
-
-    res.status(201).json({
+  return sendSuccess(res, {
+    statusCode: 201,
+    message: "Usuario registrado",
+    data: {
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    }
+  });
 };
 
-// 🔑 LOGIN
 export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ msg: "Credenciales inválidas" });
-    }
+  const user = await User.findOne({ email });
+  if (!user) throw new AppError("Credenciales inválidas", 400);
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Credenciales inválidas" });
-    }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) throw new AppError("Credenciales inválidas", 400);
 
-    const token = generateToken(user);
+  const token = generateToken(user);
 
-    res.json({
+  return sendSuccess(res, {
+    message: "Login exitoso",
+    data: {
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    }
+  });
 };
