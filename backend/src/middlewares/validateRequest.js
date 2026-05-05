@@ -8,7 +8,7 @@ export const validateRegister = (req, _res, next) => {
   if (!name || !email || !password || !role) {
     return next(new AppError("Faltan campos obligatorios", 400));
   }
-  if (!["patient", "professional", "admin"].includes(role)) {
+  if (!["patient", "professional", "center_admin"].includes(role)) {
     return next(new AppError("Rol inválido", 400));
   }
   next();
