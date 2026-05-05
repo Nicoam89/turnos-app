@@ -9,6 +9,9 @@ const BookAppointment = () => {
   const [slots, setSlots] = useState([]);
   const [modality, setModality] = useState("offline");
   const [attachments, setAttachments] = useState([]);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState("weekly");
+  const [occurrences, setOccurrences] = useState(4);
   const toAttachmentPayload = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve({ originalName: file.name, mimeType: file.type, size: file.size, dataUrl: reader.result });
@@ -20,8 +23,13 @@ const BookAppointment = () => {
   const bookAppointment = async (startTime) => {
     try {
       const attachmentsPayload = await Promise.all(Array.from(attachments).map(toAttachmentPayload));
-      await api.post("/appointments", { professionalId, date, startTime, modality, attachments: attachmentsPayload });
-      alert("Turno reservado correctamente 🎉");
+      if (isRecurring) {
+        await api.post("/appointments/recurring", { professionalId, startDate: date, startTime, modality, frequency, occurrences });
+        alert("Solicitud de turnos recurrentes enviada ✅ (requiere aprobación del profesional)");
+      } else {
+        await api.post("/appointments", { professionalId, date, startTime, modality, attachments: attachmentsPayload });
+        alert("Turno reservado correctamente 🎉");
+      }
       setAttachments([]);
       getSlots();
     } catch (error) { alert(error.response?.data?.msg || "Error al reservar"); }
@@ -37,6 +45,11 @@ const BookAppointment = () => {
           <option value="online">Online</option>
         </select>
         <input className="w-full rounded-lg border border-slate-300 px-3 py-2" type="file" multiple onChange={(e) => setAttachments(e.target.files || [])} />
+        <label className="flex items-center gap-2"><input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} /> Solicitar turno recurrente</label>
+        {isRecurring && <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <select className="rounded-lg border border-slate-300 px-3 py-2" value={frequency} onChange={(e)=>setFrequency(e.target.value)}><option value="weekly">Semanal</option><option value="biweekly">Quincenal</option><option value="monthly">Mensual</option></select>
+          <input className="rounded-lg border border-slate-300 px-3 py-2" type="number" min={2} max={24} value={occurrences} onChange={(e)=>setOccurrences(Number(e.target.value) || 4)} />
+        </div>}
         <CalendarGrid selectedDate={date} onSelectDate={setDate} markedDates={new Set()} />
         <button className="rounded-lg bg-brand text-white px-4 py-2 font-semibold" onClick={getSlots}>Buscar horarios</button>
         <h3 className="text-lg font-semibold">Horarios disponibles</h3>

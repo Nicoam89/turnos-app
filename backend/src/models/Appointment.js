@@ -34,11 +34,18 @@ const appointmentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["booked", "cancelled", "completed"],
+      enum: ["booked", "pending_approval", "cancelled", "completed"],
       default: "booked"
     },
 
     cancelledAt: Date,
+
+    recurringGroupId: String,
+    recurrence: {
+      frequency: { type: String, enum: ["weekly", "biweekly", "monthly"] },
+      occurrences: Number,
+      sequence: Number
+    },
     cancellationReason: String,
     attachments: [
       {
@@ -54,3 +61,4 @@ const appointmentSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("Appointment", appointmentSchema);
+

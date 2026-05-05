@@ -44,3 +44,13 @@ export const validateAvailableSlots = (req, _res, next) => {
   if (!isDate(date)) return next(new AppError("Fecha inválida", 400));
   next();
 };
+
+export const validateRecurringAppointment = (req, _res, next) => {
+  const { professionalId, startDate, startTime, modality, frequency, occurrences } = req.body;
+  if (!professionalId || !startDate || !startTime || !modality) return next(new AppError("Faltan campos obligatorios para turno recurrente", 400));
+  if (!isDate(startDate)) return next(new AppError("Fecha inválida", 400));
+  if (!isTime(startTime)) return next(new AppError("Hora inválida. Formato HH:mm", 400));
+  if (frequency && !["weekly", "biweekly", "monthly"].includes(frequency)) return next(new AppError("Frecuencia inválida", 400));
+  if (occurrences && (Number(occurrences) < 2 || Number(occurrences) > 24)) return next(new AppError("occurrences debe estar entre 2 y 24", 400));
+  next();
+};

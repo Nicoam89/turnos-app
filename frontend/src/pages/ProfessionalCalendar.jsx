@@ -12,6 +12,7 @@ const ProfessionalCalendar = () => {
   const [recurringRules, setRecurringRules] = useState([]);
   const dayOfWeek = useMemo(() => new Date(selectedDate).getDay(), [selectedDate]);
   const daySlots = availability.filter((a) => a.dayOfWeek === dayOfWeek);
+  const [pendingRequests, setPendingRequests] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -21,6 +22,8 @@ const ProfessionalCalendar = () => {
         setAvailability(res.data.availability || []);
         setRecurringRules(res.data.recurringRules || []);
       } catch (_) {}
+      const pending = await api.get("/appointments/professional/pending-recurring");
+      setPendingRequests(Array.isArray(pending.data?.data) ? pending.data.data : []);
     })();
   }, []);
 
@@ -41,6 +44,13 @@ const ProfessionalCalendar = () => {
     await api.put("/professionals/me/availability", { appointmentDuration, availability, recurringRules });
     alert("Disponibilidad guardada");
   };
+
+  const resolveRequest = async (groupId, action) => {
+    await api.patch(`/appointments/professional/recurring/${groupId}`, { action });
+    setPendingRequests((prev) => prev.filter((p) => p.recurringGroupId !== groupId));
+  };
+
+
 
   return (
     <Layout title="Agenda iQ">
@@ -90,6 +100,22 @@ const ProfessionalCalendar = () => {
               <button className="rounded-lg border border-rose-200 px-4 py-2 bg-rose-50 text-rose-700" onClick={() => removeRecurringRule(idx)}>Eliminar</button>
             </div>
           ))}
+        </div>
+
+<hr className="border-slate-200" />
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Solicitudes recurrentes pendientes</h3>
+          {pendingRequests.length === 0 ? <p className="text-slate-500">Sin solicitudes pendientes.</p> : (
+            Object.values(pendingRequests.reduce((acc, item) => { acc[item.recurringGroupId] = acc[item.recurringGroupId] || []; acc[item.recurringGroupId].push(item); return acc; }, {})).map((group) => (
+              <div key={group[0].recurringGroupId} className="rounded-lg border border-slate-200 p-3">
+                <p>{group.length} turnos - {group[0].recurrence?.frequency}</p>
+                <div className="flex gap-2 mt-2">
+                  <button className="rounded-lg bg-emerald-600 text-white px-3 py-2" onClick={() => resolveRequest(group[0].recurringGroupId, "approve")}>Aprobar</button>
+                  <button className="rounded-lg bg-rose-600 text-white px-3 py-2" onClick={() => resolveRequest(group[0].recurringGroupId, "reject")}>Rechazar</button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <button className="rounded-lg bg-brand text-white px-4 py-2 font-semibold" onClick={save}>Guardar disponibilidad</button>
