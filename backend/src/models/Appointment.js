@@ -39,7 +39,16 @@ const appointmentSchema = new mongoose.Schema(
     },
 
     cancelledAt: Date,
-    cancellationReason: String
+    cancellationReason: String,
+    attachments: [
+      {
+        originalName: { type: String, required: true },
+        mimeType: { type: String, required: true },
+        size: { type: Number, required: true },
+        dataUrl: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   { timestamps: true }
 );

@@ -60,6 +60,15 @@ export const createAppointment = async (req, res) => {
   });
   if (existing) throw new AppError("Turno ya reservado", 400);
 
+const attachments = Array.isArray(req.body.attachments) ? req.body.attachments : [];
+  if (attachments.length > 5) throw new AppError("Máximo 5 archivos por turno", 400);
+  attachments.forEach((file) => {
+    if (!file?.originalName || !file?.mimeType || !file?.dataUrl || !file?.size) {
+      throw new AppError("Formato inválido en archivos adjuntos", 400);
+    }
+    if (file.size > 5 * 1024 * 1024) throw new AppError("Cada archivo debe pesar hasta 5MB", 400);
+  });
+
   const appointment = await Appointment.create({
     patientId,
     professionalId,
@@ -67,9 +76,11 @@ export const createAppointment = async (req, res) => {
     startTime,
     endTime,
     modality,
-    meetLink: modality === "online" ? profile.defaultMeetLink : "",
-    address: modality === "offline" ? profile.officeAddress : ""
+    meetLink: modality === "online" ? profile.defaultMeetLink : "", attachments,
+    address: modality === "offline" ? profile.officeAddress : "", attachments
   });
+
+  
 
   const professional = await User.findById(professionalId);
   if (professional?.googleRefreshToken) {

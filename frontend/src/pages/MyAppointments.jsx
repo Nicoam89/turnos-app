@@ -31,7 +31,7 @@ const MyAppointments = () => {
     }
   };
 
-  return (
+ return (
     <Layout title="Agenda iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold">Mis turnos</h2>
@@ -42,6 +42,20 @@ const MyAppointments = () => {
             <div key={appt._id} className="rounded-lg border border-slate-200 p-4 space-y-2 bg-slate-50">
               <p className="text-slate-700"><strong>Fecha:</strong> {appt.date?.slice(0, 10)} {appt.startTime} - {appt.endTime}</p>
               <p className="text-slate-700"><strong>Estado:</strong> {appt.status}</p>
+              {appt.attachments?.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-slate-700"><strong>Archivos adjuntos:</strong></p>
+                  <ul className="list-disc list-inside text-blue-700">
+                    {appt.attachments.map((file) => (
+                      <li key={`${appt._id}-${file.originalName}`}>
+                        <a href={file.dataUrl} target="_blank" rel="noreferrer" className="underline">
+                          {file.originalName}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {appt.status !== "cancelled" && (
                 <button className="rounded-lg border border-rose-200 px-4 py-2 bg-rose-50 text-rose-700" onClick={() => cancelAppointment(appt._id)}>
                   Cancelar turno
@@ -54,5 +68,6 @@ const MyAppointments = () => {
     </Layout>
   );
 };
+
 
 export default MyAppointments;
