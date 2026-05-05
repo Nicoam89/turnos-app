@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
-import AuthContext from "./context/AuthContext.jsx";
+import AuthContext from "./context/authContextObject";
 import BookAppointment from "./pages/BookAppointment";
 import MyAppointments from "./pages/MyAppointments";
 import ProfessionalCalendar from "./pages/ProfessionalCalendar";
