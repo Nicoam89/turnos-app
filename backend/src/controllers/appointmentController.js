@@ -1,19 +1,22 @@
-import mongoose from "mongoose";
-import Appointment from "../models/Appointment.js";
-import ProfessionalProfile from "../models/ProfessionalProfile.js";
-import User from "../models/User.js";
-import { createCalendarEvent } from "../services/googleCalendarService.js";
-import AppError from "../utils/AppError.js";
-import { sendSuccess } from "../utils/apiResponse.js";
-
 const getAvailabilityForDate = (profile, selectedDate) => {
   const dayOfWeek = selectedDate.getDay();
   const dayOfMonth = selectedDate.getDate();
+  const weekOfMonth = Math.ceil(dayOfMonth / 7);
 
   const matchedRule = (profile.recurringRules || []).find((rule) => {
-    if (rule.frequency === "weekly") return rule.dayOfWeek === dayOfWeek;
-    if (rule.frequency === "monthly") return rule.dayOfMonth === dayOfMonth;
-    return false;
+    const interval = Math.max(1, Number(rule.interval) || 1);
+
+    if (rule.frequency === "weekly") {
+      if (rule.dayOfWeek !== dayOfWeek) return false;
+      return ((weekOfMonth - 1) % interval) === 0;
+    }
+
+    if (rule.frequency === "monthly") {
+      if (rule.dayOfMonth !== dayOfMonth) return false;
+      const month = selectedDate.getMonth();
+      return (month % interval) === 0;
+    }
+     return false;
   });
 
   if (matchedRule) return { startTime: matchedRule.startTime, endTime: matchedRule.endTime };
