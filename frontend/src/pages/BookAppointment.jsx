@@ -36,7 +36,7 @@ const BookAppointment = () => {
   };
 
   return (
-    <Layout title="Citas iQ">
+    <Layout title="Turnos iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold">Reservar turno</h2>
         <input className="w-full rounded-lg border border-slate-300 px-3 py-2" type="text" placeholder="Professional ID" value={professionalId} onChange={(e) => setProfessionalId(e.target.value)} />

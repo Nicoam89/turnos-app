@@ -180,6 +180,23 @@ export const cancelAppointment = async (req, res) => { const appointment = await
 export const rescheduleAppointment = async (req, res) => { return sendSuccess(res, { message: "Reprogramación disponible próximamente" }); };
 export const getMyAppointments = async (req, res) => { const appointments = await Appointment.find({ patientId: req.user.userId }).sort({ date: 1 }); return sendSuccess(res, { message: "Turnos obtenidos", data: appointments }); };
 
+
+export const getProfessionalUpcomingAppointments = async (req, res) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const appointments = await Appointment.find({
+    professionalId: req.user.userId,
+    status: { $in: ["booked", "pending_approval"] },
+    date: { $gte: today }
+  })
+    .populate("patientId", "name email")
+    .sort({ date: 1, startTime: 1 })
+    .limit(60);
+
+  return sendSuccess(res, { message: "Próximos turnos obtenidos", data: appointments });
+};
+
 export const searchProfessionalPatients = async (req, res) => {
   const query = (req.query.q || "").trim();
 

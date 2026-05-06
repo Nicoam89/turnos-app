@@ -8,6 +8,7 @@ const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
   const [profile, setProfile] = useState({ phone: "", birthDate: "", address: "", bio: "" });
   const [months, setMonths] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [professionalConfig, setProfessionalConfig] = useState({
     customProfileSlug: "",
     featureFlags: {
@@ -23,9 +24,10 @@ const Dashboard = () => {
       setProfile(profileRes.data.profile || { phone: "", birthDate: "", address: "", bio: "" });
 
       if (user?.role === "professional") {
-        const [availabilityRes, statsRes] = await Promise.all([
+        const [availabilityRes, statsRes, upcomingRes] = await Promise.all([
           api.get("/professionals/me/availability"),
-          api.get("/professionals/me/dashboard-stats")
+          api.get("/professionals/me/dashboard-stats"),
+          api.get("/appointments/professional/upcoming")
         ]);
 
         setProfessionalConfig({
@@ -33,11 +35,24 @@ const Dashboard = () => {
           featureFlags: availabilityRes.data.featureFlags || professionalConfig.featureFlags
         });
         setMonths(statsRes.data.months || []);
+        const upcomingPayload = Array.isArray(upcomingRes.data) ? upcomingRes.data : upcomingRes.data?.data;
+        setUpcomingAppointments(Array.isArray(upcomingPayload) ? upcomingPayload : []);
       }
     };
 
     load().catch(() => {});
   }, [user?.role]);
+
+
+  const groupedUpcomingByDay = upcomingAppointments.reduce((acc, appointment) => {
+    const dateKey = appointment.date?.slice(0, 10);
+    if (!dateKey) return acc;
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(appointment);
+    return acc;
+  }, {});
+
+  const orderedUpcomingDays = Object.entries(groupedUpcomingByDay).sort(([a], [b]) => a.localeCompare(b));
 
   const saveProfile = async () => {
     await api.put("/users/me", profile);
@@ -55,7 +70,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Layout title="Citas iQ">
+    <Layout title="Turnos iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold text-slate-900">Dashboard</h2>
         <p className="text-slate-600">Bienvenido: <strong>{user?.name}</strong></p>
@@ -83,6 +98,35 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {months.map((m) => <div key={m._id} className="rounded-lg bg-slate-50 border border-slate-200 p-3"><strong>{m._id}</strong><p>{m.totalAppointments} citas</p></div>)}
         </div>
+
+
+        <div className="space-y-2">
+          <h4 className="text-lg font-semibold">Próximos turnos (Kanban por día)</h4>
+          {orderedUpcomingDays.length === 0 ? (
+            <p className="text-slate-500">No hay próximos turnos confirmados.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {orderedUpcomingDays.map(([day, appointments]) => (
+                <div key={day} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                  <div className="sticky top-0 bg-slate-50 pb-1">
+                    <p className="font-semibold text-slate-800">{new Date(`${day}T00:00:00`).toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "2-digit" })}</p>
+                    <p className="text-xs text-slate-500">{appointments.length} turnos</p>
+                  </div>
+                  <div className="space-y-2">
+                    {appointments.map((appt) => (
+                      <div key={appt._id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                        <p className="font-medium text-slate-800">{appt.startTime} - {appt.endTime}</p>
+                        <p className="text-sm text-slate-600">Paciente: {appt.patientId?.name || "Sin nombre"}</p>
+                        <p className="text-xs text-slate-500">{appt.modality === "online" ? "Online" : "Presencial"} · {appt.status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <input className="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Slug link personalizado" value={professionalConfig.customProfileSlug} onChange={(e)=>setProfessionalConfig((p)=>({ ...p, customProfileSlug: e.target.value }))} />
         <label className="flex items-center gap-2"><input type="checkbox" checked={professionalConfig.featureFlags.recurringAppointmentsEnabled} onChange={(e)=>setProfessionalConfig((p)=>({ ...p, featureFlags: { ...p.featureFlags, recurringAppointmentsEnabled: e.target.checked } }))} /> Habilitar citas recurrentes</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={professionalConfig.featureFlags.customProfileLinkEnabled} onChange={(e)=>setProfessionalConfig((p)=>({ ...p, featureFlags: { ...p.featureFlags, customProfileLinkEnabled: e.target.checked } }))} /> Habilitar link de perfil personalizado</label>

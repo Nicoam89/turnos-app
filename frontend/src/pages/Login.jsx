@@ -19,7 +19,7 @@ const Login = () => {
   };
 
   return (
-    <Layout title="Citas iQ">
+    <Layout title="Turnos iQ">
       <section className="max-w-md mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2>Iniciar sesión</h2>
         <form className="space-y-3" onSubmit={handleSubmit}>

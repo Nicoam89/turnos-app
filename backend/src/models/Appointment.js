@@ -55,7 +55,11 @@ const appointmentSchema = new mongoose.Schema(
         dataUrl: { type: String, required: true },
         uploadedAt: { type: Date, default: Date.now }
       }
-    ]
+    ],
+    reminders: {
+      email24hSentAt: Date,
+      email2hSentAt: Date
+    }
   },
   { timestamps: true }
 );

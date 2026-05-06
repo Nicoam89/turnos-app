@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import app from "./app.js";
 import connectDB from "./config/db.js";
+import { startReminderWorker } from "./services/reminderService.js";
 
 dotenv.config();
 
@@ -13,6 +14,8 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
   });
+
+  startReminderWorker();
 };
 
 startServer();
