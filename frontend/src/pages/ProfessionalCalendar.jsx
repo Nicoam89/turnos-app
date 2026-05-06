@@ -13,6 +13,11 @@ const ProfessionalCalendar = () => {
   const dayOfWeek = useMemo(() => new Date(selectedDate).getDay(), [selectedDate]);
   const daySlots = availability.filter((a) => a.dayOfWeek === dayOfWeek);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [patientQuery, setPatientQuery] = useState("");
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [patientHistory, setPatientHistory] = useState([]);
+
 
   useEffect(() => {
     (async () => {
@@ -21,8 +26,16 @@ const ProfessionalCalendar = () => {
         setAppointmentDuration(res.data.appointmentDuration || 30);
         setAvailability(res.data.availability || []);
         setRecurringRules(res.data.recurringRules || []);
-      } catch (_) {}
-      const pending = await api.get("/appointments/professional/pending-recurring");
+       } catch {
+        // noop
+      }
+      const [pending, patientsRes] = await Promise.all([
+        api.get("/appointments/professional/pending-recurring"),
+        api.get("/appointments/professional/patients")
+      ]);
+      setPendingRequests(Array.isArray(pending.data?.data) ? pending.data.data : []);
+      setPatients(Array.isArray(patientsRes.data?.data) ? patientsRes.data.data : []);
+
       setPendingRequests(Array.isArray(pending.data?.data) ? pending.data.data : []);
     })();
   }, []);
@@ -50,10 +63,22 @@ const ProfessionalCalendar = () => {
     setPendingRequests((prev) => prev.filter((p) => p.recurringGroupId !== groupId));
   };
 
+  const searchPatients = async () => {
+    const res = await api.get("/appointments/professional/patients", { params: { q: patientQuery } });
+    setPatients(Array.isArray(res.data?.data) ? res.data.data : []);
+    setSelectedPatient(null);
+    setPatientHistory([]);
+  };
+
+  const loadPatientHistory = async (patient) => {
+    const res = await api.get(`/appointments/professional/patients/${patient._id}/history`);
+    setSelectedPatient(patient);
+    setPatientHistory(Array.isArray(res.data?.data) ? res.data.data : []);
+  };
 
 
   return (
-    <Layout title="Agenda iQ">
+    <Layout title="Citas iQ">
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
         <h2 className="text-2xl font-semibold">Calendario profesional</h2>
         <CalendarGrid selectedDate={selectedDate} onSelectDate={setSelectedDate} />
@@ -115,6 +140,37 @@ const ProfessionalCalendar = () => {
                 </div>
               </div>
             ))
+          )}
+        </div>
+                  <hr className="border-slate-200" />
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Pacientes e historial de turnos</h3>
+          <div className="flex gap-2">
+            <input className="rounded-lg border border-slate-300 px-3 py-2 w-full" placeholder="Buscar por nombre o email" value={patientQuery} onChange={(e) => setPatientQuery(e.target.value)} />
+            <button className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2" onClick={searchPatients}>Buscar</button>
+          </div>
+
+          {patients.length === 0 ? <p className="text-slate-500">No hay pacientes para mostrar.</p> : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {patients.map((patient) => (
+                <button key={patient._id} className="text-left rounded-lg border border-slate-200 p-3 hover:bg-slate-50" onClick={() => loadPatientHistory(patient)}>
+                  <p className="font-medium">{patient.name}</p>
+                  <p className="text-sm text-slate-500">{patient.email}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {selectedPatient && (
+            <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+              <h4 className="font-semibold">Historial de {selectedPatient.name}</h4>
+              {patientHistory.length === 0 ? <p className="text-slate-500">Sin turnos registrados.</p> : patientHistory.map((item) => (
+                <div key={item._id} className="rounded-lg bg-slate-50 border border-slate-200 p-2 text-sm">
+                  <p><strong>Fecha:</strong> {new Date(item.date).toLocaleDateString()} {item.startTime} - {item.endTime}</p>
+                  <p><strong>Estado:</strong> {item.status} | <strong>Modalidad:</strong> {item.modality}</p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 

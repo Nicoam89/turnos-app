@@ -9,7 +9,9 @@ import {
   getMyAppointments,
   createRecurringAppointmentRequest,
   getPendingRecurringRequests,
-  approveRecurringRequest
+  approveRecurringRequest,
+  searchProfessionalPatients,
+  getProfessionalPatientHistory
 } from "../controllers/appointmentController.js";
 
 import { protect } from "../middlewares/authMiddleware.js";
@@ -29,5 +31,8 @@ router.patch("/:id/reschedule", protect, validateRescheduleAppointment, asyncHan
 router.get("/my", protect, asyncHandler(getMyAppointments));
 router.get("/professional/pending-recurring", protect, asyncHandler(getPendingRecurringRequests));
 router.patch("/professional/recurring/:recurringGroupId", protect, asyncHandler(approveRecurringRequest));
+
+router.get("/professional/patients", protect, asyncHandler(searchProfessionalPatients));
+router.get("/professional/patients/:patientId/history", protect, asyncHandler(getProfessionalPatientHistory));
 
 export default router;

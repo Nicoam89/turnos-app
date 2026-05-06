@@ -179,3 +179,41 @@ export const getAvailableSlots = async (req, res) => { /* unchanged */
 export const cancelAppointment = async (req, res) => { const appointment = await Appointment.findById(req.params.id); if (!appointment) throw new AppError("Turno no encontrado", 404); if (appointment.patientId.toString() !== req.user.userId && appointment.professionalId.toString() !== req.user.userId) throw new AppError("No autorizado", 403); appointment.status = "cancelled"; appointment.cancelledAt = new Date(); await appointment.save(); return sendSuccess(res, { message: "Turno cancelado correctamente", data: appointment }); };
 export const rescheduleAppointment = async (req, res) => { return sendSuccess(res, { message: "Reprogramación disponible próximamente" }); };
 export const getMyAppointments = async (req, res) => { const appointments = await Appointment.find({ patientId: req.user.userId }).sort({ date: 1 }); return sendSuccess(res, { message: "Turnos obtenidos", data: appointments }); };
+
+export const searchProfessionalPatients = async (req, res) => {
+  const query = (req.query.q || "").trim();
+
+  const professionalAppointments = await Appointment.find({ professionalId: req.user.userId }).distinct("patientId");
+  if (professionalAppointments.length === 0) {
+    return sendSuccess(res, { message: "Pacientes obtenidos", data: [] });
+  }
+
+  const filter = { _id: { $in: professionalAppointments } };
+  if (query) {
+    filter.$or = [
+      { name: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } }
+    ];
+  }
+
+  const patients = await User.find(filter)
+    .select("name email profile.phone")
+    .sort({ name: 1 })
+    .limit(30);
+
+  return sendSuccess(res, { message: "Pacientes obtenidos", data: patients });
+};
+
+export const getProfessionalPatientHistory = async (req, res) => {
+  const { patientId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(patientId)) throw new AppError("ID de paciente inválido", 400);
+
+  const hasRelationship = await Appointment.exists({ professionalId: req.user.userId, patientId });
+  if (!hasRelationship) throw new AppError("No autorizado para ver este historial", 403);
+
+  const history = await Appointment.find({ professionalId: req.user.userId, patientId })
+    .sort({ date: -1, startTime: -1 })
+    .select("date startTime endTime modality status cancellationReason attachments createdAt");
+
+  return sendSuccess(res, { message: "Historial obtenido", data: history });
+};
