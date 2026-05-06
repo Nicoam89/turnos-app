@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema(
     googleRefreshToken: {
       type: String,
       default: null
+   },
+
+    profile: {
+      phone: { type: String, default: "" },
+      birthDate: { type: String, default: "" },
+      address: { type: String, default: "" },
+      bio: { type: String, default: "" }
     }
   },
   {

@@ -1,0 +1,11 @@
+{
+  "name": "turnos-app",
+  "private": true,
+  "scripts": {
+    "build": "npm run --prefix frontend build",
+    "build:frontend": "npm run --prefix frontend build",
+    "start:backend": "npm run --prefix backend start",
+    "dev:frontend": "npm run --prefix frontend dev",
+    "dev:backend": "npm run --prefix backend dev"
+  }
+}

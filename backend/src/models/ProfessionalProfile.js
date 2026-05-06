@@ -66,7 +66,13 @@ const professionalProfileSchema = new mongoose.Schema(
     availability: [availabilitySchema],
     recurringRules: [recurringRuleSchema],
     defaultMeetLink: { type: String, default: "" },
-    officeAddress: { type: String, default: "" }
+    officeAddress: { type: String, default: "" },
+    customProfileSlug: { type: String, default: "" },
+    featureFlags: {
+      recurringAppointmentsEnabled: { type: Boolean, default: true },
+      customProfileLinkEnabled: { type: Boolean, default: true },
+      appointmentAttachmentsEnabled: { type: Boolean, default: true }
+    }
   },
   { timestamps: true }
 );

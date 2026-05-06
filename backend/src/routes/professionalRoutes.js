@@ -1,11 +1,12 @@
 import express from "express";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
-import { getMyAvailability, upsertMyAvailability } from "../controllers/professionalController.js";
+import { getMyAvailability, upsertMyAvailability, getMyDashboardStats } from "../controllers/professionalController.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 
 const router = express.Router();
 
 router.get("/me/availability", protect, authorize("professional"), asyncHandler(getMyAvailability));
 router.put("/me/availability", protect, authorize("professional"), asyncHandler(upsertMyAvailability));
+router.get("/me/dashboard-stats", protect, authorize("professional"), asyncHandler(getMyDashboardStats));
 
 export default router;

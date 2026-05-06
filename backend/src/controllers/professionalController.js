@@ -12,7 +12,9 @@ export const getMyAvailability = async (req, res) => {
       availability: profile.availability,
       recurringRules: profile.recurringRules,
       defaultMeetLink: profile.defaultMeetLink,
-      officeAddress: profile.officeAddress
+      officeAddress: profile.officeAddress,
+      customProfileSlug: profile.customProfileSlug,
+      featureFlags: profile.featureFlags
     });
   } catch (error) {
     return res.status(500).json({ msg: error.message });
@@ -27,7 +29,10 @@ export const upsertMyAvailability = async (req, res) => {
       availability = [],
       recurringRules = [],
       defaultMeetLink = "",
-      officeAddress = ""
+      officeAddress = "",
+      customProfileSlug = "",
+      featureFlags = {}
+
     } = req.body;
 
     const normalized = availability
@@ -58,7 +63,14 @@ export const upsertMyAvailability = async (req, res) => {
           recurringRules: normalizedRules,
           specialty: "General",
           defaultMeetLink,
-          officeAddress
+          officeAddress,
+          customProfileSlug,
+          featureFlags: {
+            recurringAppointmentsEnabled: Boolean(featureFlags.recurringAppointmentsEnabled ?? true),
+            customProfileLinkEnabled: Boolean(featureFlags.customProfileLinkEnabled ?? true),
+            appointmentAttachmentsEnabled: Boolean(featureFlags.appointmentAttachmentsEnabled ?? true)
+          }
+
         }
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -70,9 +82,38 @@ export const upsertMyAvailability = async (req, res) => {
       availability: profile.availability,
       recurringRules: profile.recurringRules,
       defaultMeetLink: profile.defaultMeetLink,
-      officeAddress: profile.officeAddress
+      officeAddress: profile.officeAddress,
+      customProfileSlug: profile.customProfileSlug,
+      featureFlags: profile.featureFlags
     });
   } catch (error) {
     return res.status(500).json({ msg: error.message });
   }
 };
+
+export const getMyDashboardStats = async (req, res) => {
+  const professionalId = req.user.userId;
+  const now = new Date();
+  const from = new Date(now.getFullYear(), 0, 1);
+
+  const rows = await Appointment.aggregate([
+    {
+      $match: {
+        professionalId: profileToObjectId(professionalId),
+        status: { $in: ["booked", "completed"] },
+        date: { $gte: from, $lte: now }
+      }
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m", date: "$date" } },
+        totalAppointments: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  return res.json({ months: rows });
+};
+
+const profileToObjectId = (id) => new mongoose.Types.ObjectId(id);

@@ -84,7 +84,7 @@ export const createAppointment = async (req, res) => {
     meetLink: modality === "online" ? profile.defaultMeetLink : "",
     address: modality === "offline" ? profile.officeAddress : "",
     status: "booked",
-    attachments: Array.isArray(req.body.attachments) ? req.body.attachments : []
+    attachments: profile.featureFlags?.appointmentAttachmentsEnabled && Array.isArray(req.body.attachments) ? req.body.attachments : []
   });
 
   return sendSuccess(res, { statusCode: 201, message: "Turno creado correctamente", data: appointment });
@@ -101,7 +101,8 @@ export const createRecurringAppointmentRequest = async (req, res) => {
 
   const profile = await ProfessionalProfile.findOne({ userId: professionalId });
   if (!profile) throw new AppError("Profesional no encontrado", 404);
-
+  if (!profile.featureFlags?.recurringAppointmentsEnabled) throw new AppError("Este profesional no acepta citas recurrentes", 400);
+ 
   const dayIncrement = frequency === "weekly" ? 7 : frequency === "biweekly" ? 14 : 30;
   const recurringGroupId = new mongoose.Types.ObjectId().toString();
   const created = [];
